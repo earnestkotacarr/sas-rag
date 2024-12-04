@@ -1,0 +1,349 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 100vh;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "description": "\"Jane Smith is a creator of the \u0027Customer_Data\u0027 dataset, which contains customer demographic and account information for the retail banking division.\"", "entity_type": "\"PERSON\"", "id": "\"JANE SMITH\"", "label": "\"JANE SMITH\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Customer_Data is a dataset containing customer demographic and account information for the retail banking division, created by Jane Smith.\"\u003cSEP\u003e\"Customer_Data.sas7bdat is a foundational data set used by both the Loan_Risk_Model.sas and Default_Prediction_Model.sas programs.\"", "entity_type": "\"EVENT\"", "id": "\"CUSTOMER_DATA.SAS7BDAT\"", "label": "\"CUSTOMER_DATA.SAS7BDAT\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1\u003cSEP\u003echunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"John Doe is a creator of the \u0027Account_Transactions\u0027 dataset, which records all transactions for customer accounts, including deposits and withdrawals.\"", "entity_type": "\"PERSON\"", "id": "\"JOHN DOE\"", "label": "\"JOHN DOE\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Account_Transactions is a dataset recording all transactions for customer accounts, created by John Doe.\"", "entity_type": "\"EVENT\"", "id": "\"ACCOUNT_TRANSACTIONS.SAS7BDAT\"", "label": "\"ACCOUNT_TRANSACTIONS.SAS7BDAT\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Emily Johnson is a creator of the \u0027Fraud_Detection_Model.sas\u0027 program, implementing a machine learning model to detect fraudulent transactions.\"", "entity_type": "\"PERSON\"", "id": "\"EMILY JOHNSON\"", "label": "\"EMILY JOHNSON\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Fraud_Detection_Model is a SAS program implementing a machine learning model to detect fraudulent transactions, created by Emily Johnson.\"", "entity_type": "\"EVENT\"", "id": "\"FRAUD_DETECTION_MODEL.SAS\"", "label": "\"FRAUD_DETECTION_MODEL.SAS\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Sarah Lee is a creator of the \u0027Loan_Applications\u0027 dataset, detailing loan applications submitted by customers.\"", "entity_type": "\"PERSON\"", "id": "\"SARAH LEE\"", "label": "\"SARAH LEE\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Loan_Applications is a dataset detailing loan applications submitted by customers, created by Sarah Lee.\"\u003cSEP\u003e\"Loan_Applications.sas7bdat is an input data set used in the Loan_Risk_Model.sas program for assessing loan application risks.\"", "entity_type": "\"EVENT\"", "id": "\"LOAN_APPLICATIONS.SAS7BDAT\"", "label": "\"LOAN_APPLICATIONS.SAS7BDAT\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1\u003cSEP\u003echunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Loan_Risk_Model.sas is a SAS program designed to predict the risk level of loan applications, using input data from Loan_Applications.sas7bdat and Customer_Data.sas7bdat, and outputting to Loan_Risk_Scores.sas7bdat.\"", "entity_type": "\"EVENT\"", "id": "\"LOAN_RISK_MODEL.SAS\"", "label": "\"LOAN_RISK_MODEL.SAS\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Default_Prediction_Model.sas is a SAS program that predicts credit card default likelihoods, using input data from Credit_Card_Usage.sas7bdat and Customer_Data.sas7bdat, with output to Default_Predictions.sas7bdat.\"", "entity_type": "\"EVENT\"", "id": "\"DEFAULT_PREDICTION_MODEL.SAS\"", "label": "\"DEFAULT_PREDICTION_MODEL.SAS\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Fraudulent_Transactions is a dataset containing transactions identified as potentially fraudulent by the fraud detection model, system generated.\"", "entity_type": "\"EVENT\"", "id": "\"FRAUDULENT_TRANSACTIONS.SAS7BDAT\"", "label": "\"FRAUDULENT_TRANSACTIONS.SAS7BDAT\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Customer_Data is a dataset containing customer demographic and account information for the retail banking division, created by Jane Smith on 15JAN2023.\"", "entity_type": "\"EVENT\"", "id": "\"CUSTOMER_DATA\"", "label": "\"CUSTOMER_DATA\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Account_Transactions is a dataset recording all transactions for customer accounts, including deposits and withdrawals, created by John Doe on 16JAN2023.\"", "entity_type": "\"EVENT\"", "id": "\"ACCOUNT_TRANSACTIONS\"", "label": "\"ACCOUNT_TRANSACTIONS\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Loan_Applications is a dataset detailing loan applications submitted by customers, created by Sarah Lee on 10MAR2023.\"", "entity_type": "\"EVENT\"", "id": "\"LOAN_APPLICATIONS\"", "label": "\"LOAN_APPLICATIONS\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Fraud_Detection_Model is a SAS program implementing a machine learning model to detect fraudulent transactions, created by Emily Johnson on 01FEB2023.\"", "entity_type": "\"EVENT\"", "id": "\"FRAUD_DETECTION_MODEL\"", "label": "\"FRAUD_DETECTION_MODEL\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Fraudulent_Transactions is a dataset containing transactions identified as potentially fraudulent by the fraud detection model.\"", "entity_type": "\"EVENT\"", "id": "\"FRAUDULENT_TRANSACTIONS\"", "label": "\"FRAUDULENT_TRANSACTIONS\"", "shape": "dot", "size": 10, "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1"}, {"color": "#97c2fc", "description": "\"Michael Brown is the creator of the Loan_Risk_Model.sas, a predictive model to assess the risk level of loan applications, created on 15MAR2023.\"", "entity_type": "\"PERSON\"", "id": "\"MICHAEL BROWN\"", "label": "\"MICHAEL BROWN\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"David Wilson created the Credit_Card_Usage.sas7bdat dataset, which contains monthly credit card usage data for customers, created on 01APR2023.\"", "entity_type": "\"PERSON\"", "id": "\"DAVID WILSON\"", "label": "\"DAVID WILSON\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Credit_Card_Usage.sas7bdat includes monthly credit card usage data, serving as input for Default_Prediction_Model.sas.\"", "entity_type": "\"ORGANIZATION\"", "id": "\"CREDIT_CARD_USAGE.SAS7BDAT\"", "label": "\"CREDIT_CARD_USAGE.SAS7BDAT\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Laura Martinez is the creator of the Default_Prediction_Model.sas, which predicts the likelihood of credit card default, created on 10APR2023.\"", "entity_type": "\"PERSON\"", "id": "\"LAURA MARTINEZ\"", "label": "\"LAURA MARTINEZ\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Loan_Risk_Scores.sas7bdat contains risk scores for each loan application, generated by the Loan_Risk_Model.sas.\"", "entity_type": "\"ORGANIZATION\"", "id": "\"LOAN_RISK_SCORES.SAS7BDAT\"", "label": "\"LOAN_RISK_SCORES.SAS7BDAT\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Default_Predictions.sas7bdat contains predicted default probabilities for credit card customers, produced by the Default_Prediction_Model.sas.\"", "entity_type": "\"ORGANIZATION\"", "id": "\"DEFAULT_PREDICTIONS.SAS7BDAT\"", "label": "\"DEFAULT_PREDICTIONS.SAS7BDAT\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}, {"color": "#97c2fc", "description": "\"Approval_Status is an application status representing the final decision on a loan application.\"", "entity_type": "\"EVENT\"", "id": "\"APPROVAL_STATUS\"", "label": "\"APPROVAL_STATUS\"", "shape": "dot", "size": 10, "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405"}]);
+                  edges = new vis.DataSet([{"description": "\"Jane Smith created the Customer_Data dataset, which includes retail banking customer information.\"", "from": "\"JANE SMITH\"", "keywords": "\"creation, data management\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"CUSTOMER_DATA.SAS7BDAT\"", "width": 8.0}, {"description": "\"John Doe created the Account_Transactions dataset, documenting customer transactions.\"", "from": "\"JOHN DOE\"", "keywords": "\"creation, data documentation\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"ACCOUNT_TRANSACTIONS.SAS7BDAT\"", "width": 8.0}, {"description": "\"Emily Johnson created the Fraud_Detection_Model, a program to detect fraudulent transactions.\"", "from": "\"EMILY JOHNSON\"", "keywords": "\"creation, fraud detection\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"FRAUD_DETECTION_MODEL.SAS\"", "width": 9.0}, {"description": "\"Sarah Lee created the Loan_Applications dataset, documenting customer loan applications.\"", "from": "\"SARAH LEE\"", "keywords": "\"creation, data documentation\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"LOAN_APPLICATIONS.SAS7BDAT\"", "width": 8.0}, {"description": "\"Loan_Risk_Model.sas relies on Customer_Data.sas7bdat as part of its input data for evaluating risks.\"", "from": "\"CUSTOMER_DATA.SAS7BDAT\"", "keywords": "\"data usage, risk evaluation\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"LOAN_RISK_MODEL.SAS\"", "width": 8.0}, {"description": "\"Default_Prediction_Model.sas integrates Customer_Data.sas7bdat as part of its input data.\"", "from": "\"CUSTOMER_DATA.SAS7BDAT\"", "keywords": "\"data integration, prediction support\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"DEFAULT_PREDICTION_MODEL.SAS\"", "width": 8.0}, {"description": "\"The Fraud_Detection_Model program identifies fraudulent transactions that are recorded in the Fraudulent_Transactions dataset.\"", "from": "\"FRAUD_DETECTION_MODEL.SAS\"", "keywords": "\"fraud detection, data output\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"FRAUDULENT_TRANSACTIONS.SAS7BDAT\"", "width": 9.0}, {"description": "\"Loan_Risk_Model.sas uses Loan_Applications.sas7bdat as input data for risk assessment.\"", "from": "\"LOAN_APPLICATIONS.SAS7BDAT\"", "keywords": "\"data usage, risk assessment\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"LOAN_RISK_MODEL.SAS\"", "width": 7.0}, {"description": "\"The Customer_Data and Account_Transactions datasets are related through shared customer identifiers used to track customer-related transactions.\"", "from": "\"CUSTOMER_DATA\"", "keywords": "\"dataset integration, customer tracking\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"ACCOUNT_TRANSACTIONS\"", "width": 7.0}, {"description": "\"Loan_Applications and Customer_Data are connected through shared customer identifiers to provide insights into customer loan history and demographics.\"", "from": "\"CUSTOMER_DATA\"", "keywords": "\"data linkage, customer analysis\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"LOAN_APPLICATIONS\"", "width": 8.0}, {"description": "\"Account_Transactions serves as input data for the Fraud_Detection_Model program.\"", "from": "\"ACCOUNT_TRANSACTIONS\"", "keywords": "\"data input, fraud detection\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"FRAUD_DETECTION_MODEL\"", "width": 8.0}, {"description": "\"The Fraud_Detection_Model outputs data to the Fraudulent_Transactions dataset, identifying potentially fraudulent transactions.\"", "from": "\"FRAUD_DETECTION_MODEL\"", "keywords": "\"data output, fraud detection\"", "source_id": "chunk-b479286ad54aa88efa50ab3c90b08ba1", "to": "\"FRAUDULENT_TRANSACTIONS\"", "width": 9.0}, {"description": "\"Michael Brown created the Loan_Risk_Model.sas to evaluate loan application risks.\"", "from": "\"MICHAEL BROWN\"", "keywords": "\"creation, risk assessment\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"LOAN_RISK_MODEL.SAS\"", "width": 8.0}, {"description": "\"David Wilson created Credit_Card_Usage.sas7bdat, which provides input data for default predictions.\"", "from": "\"DAVID WILSON\"", "keywords": "\"data creation, input provision\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"CREDIT_CARD_USAGE.SAS7BDAT\"", "width": 7.0}, {"description": "\"Laura Martinez developed the Default_Prediction_Model.sas to predict credit card default risks.\"", "from": "\"LAURA MARTINEZ\"", "keywords": "\"creation, default prediction\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"DEFAULT_PREDICTION_MODEL.SAS\"", "width": 9.0}, {"description": "\"Loan_Risk_Model.sas produces risk scores stored in Loan_Risk_Scores.sas7bdat.\"", "from": "\"LOAN_RISK_MODEL.SAS\"", "keywords": "\"output generation, risk scoring\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"LOAN_RISK_SCORES.SAS7BDAT\"", "width": 8.0}, {"description": "\"Default_Prediction_Model.sas uses Credit_Card_Usage.sas7bdat as input data to predict defaults.\"", "from": "\"DEFAULT_PREDICTION_MODEL.SAS\"", "keywords": "\"data usage, default prediction\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"CREDIT_CARD_USAGE.SAS7BDAT\"", "width": 8.0}, {"description": "\"Default_Prediction_Model.sas generates predicted probabilities of default stored in Default_Predictions.sas7bdat.\"", "from": "\"DEFAULT_PREDICTION_MODEL.SAS\"", "keywords": "\"output generation, prediction storage\"", "source_id": "chunk-5da9fd4a1b1dc781400a885ab629b405", "to": "\"DEFAULT_PREDICTIONS.SAS7BDAT\"", "width": 8.0}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
