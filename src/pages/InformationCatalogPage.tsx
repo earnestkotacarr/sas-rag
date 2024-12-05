@@ -748,7 +748,7 @@ run;`,
 
   return (
     <div className="catalog-page p-6">
-      <h1 className="text-3xl font-bold mb-6">Data Repository</h1>
+      <h1 className="text-3xl font-bold mb-6">データ保管庫</h1>
       <table className="file-table w-full text-left border-collapse">
         <thead>
           <tr>
@@ -783,7 +783,7 @@ run;`,
                   onClick={() => handleViewMetadata(file)}
                   title="View metadata for this file"
                 >
-                  View Metadata
+                  メタデータを表示
                 </button>
               </td>
             </tr>
@@ -883,12 +883,12 @@ run;`,
       <div className="mt-8">
         <Link to="/graph">
           <button className="bg-secondary text-white px-4 py-2 rounded mr-4 hover:bg-secondary-dark focus:outline-none">
-            View Data Relationship Graph
+          データ関係グラフを表示
           </button>
         </Link>
         <Link to="/search">
           <button className="bg-secondary text-white px-4 py-2 rounded hover:bg-secondary-dark focus:outline-none">
-            Perform Intelligent Search
+          インテリジェントな検索を実行
           </button>
         </Link>
       </div>

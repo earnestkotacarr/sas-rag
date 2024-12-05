@@ -51,7 +51,7 @@ export default function SearchPage() {
   const [lightRagResponse, setLightRagResponse] = useState<string>("");
 
   const addContext = () => {
-    setSearchQuery(prevQuery => `${prevQuery} {user recent activity logs}`);
+    setSearchQuery(prevQuery => `${prevQuery} {ユーザーの最近のアクティビティログ}`);
   };
 
   const search = async (query: string) => {
@@ -108,7 +108,7 @@ export default function SearchPage() {
               }
             }}
             className="flex-1 border border-gray-300 p-2"
-            placeholder="Ask me about loans, risk or fraud!"
+            placeholder="融資、リスク、詐欺について、私に聞いてください！"
           />
           <button
             disabled={searchInFlight}
@@ -116,7 +116,7 @@ export default function SearchPage() {
             className="bg-primary text-white p-2"
             onClick={() => search(searchQuery)}
           >
-            Search
+            サーチ
           </button>
           <button
             disabled={searchInFlight}
@@ -124,7 +124,7 @@ export default function SearchPage() {
             className="bg-secondary text-white p-2 ml-2"
             onClick={addContext}
           >
-            Add Context
+            コンテキストを追加
           </button>
         </div>
         {searchInFlight && (
@@ -163,7 +163,7 @@ export default function SearchPage() {
     return (
       <div className="flex flex-1 flex-col">
         <h1 className="text-3xl font-extralight pb-4">
-          <span className="font-normal">Your Query: </span>
+          <span className="font-normal">問い合わせ内容: </span>
           {searchResultTitle}
         </h1>
         <div className="flex flex-row w-full pb-5">

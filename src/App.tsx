@@ -14,16 +14,16 @@ function App() {
         <div className="container mx-auto flex flex-row items-center">
           <h2 className="text-xl font-semibold mr-6">SAS HERO</h2>
           <Link to="/" className="mr-4 hover:underline">
-            Home
+            ホーム
           </Link>
           <Link to="/catalog" className="mr-4 hover:underline">
-            Data-Room
+            データー
           </Link>
           <Link to="/graph" className="mr-4 hover:underline">
-            Data-Graph
+            グラフ
           </Link>
           <Link to="/search" className="mr-4 hover:underline">
-            Smart-Search
+            サーチ
           </Link>
         </div>
       </nav>
